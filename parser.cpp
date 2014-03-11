@@ -1,3 +1,4 @@
+#include <string.h>
 #include <iostream>
 #include <fstream>
 #include <chrono>
@@ -8,7 +9,9 @@ using namespace std;
 using namespace chrono;
 
 constexpr int  TAG_MSG_TYPE = 35;
+constexpr char TAG_MSG_TYPE_CHAR[] = "35";
 constexpr int  TAG_ORDER_QTY = 38;
+constexpr char TAG_ORDER_QTY_CHAR[] = "38";
 
 constexpr char MSG_TYPE_EXECUTION_REPORT[] = "8";
 
@@ -60,20 +63,26 @@ private:
         {
             // The tag is the string from the current position until the equal sign
             size_t tag_end = data_.find(TAG_VALUE_SEPARATOR, tag_begin);
-            string tag = data_.substr(tag_begin, tag_end - tag_begin);
 
             // The value is the string from just after the equal sign to the SOH
             size_t value_begin = tag_end + 1;
             size_t value_end = data_.find(SOH, value_begin);
 
+            // make sure we don't overflow data, assuming it is valid fix.
+            static_assert(sizeof(TAG_MSG_TYPE_CHAR) <= CHECKSUM_LENGTH, "invalid size");
+            static_assert(sizeof(TAG_ORDER_QTY_CHAR) <= CHECKSUM_LENGTH, "invalid size");
+
             // Only convert the value if tag is one we care about
-            auto tag_as_int = stoi(tag);
-            if (tag_as_int == TAG_MSG_TYPE or tag_as_int == TAG_ORDER_QTY)
+            if ((0 == memcmp(TAG_MSG_TYPE_CHAR, data_.data() + tag_begin, sizeof(TAG_MSG_TYPE_CHAR)-1))  ||
+                (0 == memcmp(TAG_ORDER_QTY_CHAR, data_.data() + tag_begin, sizeof(TAG_ORDER_QTY_CHAR)-1))
+               )
             {
+                string tag = data_.substr(tag_begin, tag_end - tag_begin);
+                auto tag_as_int = stoi(tag);
                 string field = data_.substr(value_begin, value_end - value_begin);
 
                 // Store the tag and value in our container
-                fields_.emplace_back(stoi(tag), field);
+                fields_.emplace_back(tag_as_int, field);
             }
 
             // Prepare to look for the next tag
@@ -179,7 +188,7 @@ int main(int argc, char *argv[])
     cout << "ns/msg:        " << double(total_duration)/times.size() << endl;
 
     // Write the timing data to a file
-    ofstream times_file("times-4.txt");
+    ofstream times_file("times-5.txt");
     for(auto i : times)
     {
         times_file << i.count() << endl;

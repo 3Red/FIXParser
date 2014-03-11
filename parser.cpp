@@ -1,3 +1,4 @@
+#include <string.h>
 #include <iostream>
 #include <fstream>
 #include <chrono>
@@ -11,8 +12,10 @@ constexpr char EXECUTION_REPORT[] = "8";
 constexpr int CHECKSUM_LENGTH = 3;
 constexpr char SOH = '\001';
 constexpr int MSG_TYPE = 35;
+constexpr char MSG_TYPE_CHAR[] = "35";
 constexpr int ORDER_QTY = 38;
 constexpr char END[] = "\00110=";
+constexpr char ORDER_QTY_CHAR[] = "38";
 
 struct MessageParser {
     MessageParser(string& data, size_t begin, size_t end)
@@ -44,9 +47,13 @@ private:
             auto tag_end = data_.find('=', tag_begin);
             auto value_begin = tag_end + 1;
             auto value_end = data_.find(SOH, value_begin);
-            auto tag = data_.substr(tag_begin, tag_end - tag_begin);
-            auto tag_as_int = stoi(tag);
-            if (tag_as_int == MSG_TYPE or tag_as_int == ORDER_QTY) {
+            // make sure we don't overflow data, assuming it is valid fix.
+            static_assert(sizeof(MSG_TYPE_CHAR) <= CHECKSUM_LENGTH, "invalid size"); 
+            static_assert(sizeof(ORDER_QTY_CHAR) <= CHECKSUM_LENGTH, "invalid size");
+            if ((0 == memcmp(MSG_TYPE_CHAR, data_.data() + tag_begin, sizeof(MSG_TYPE_CHAR)-1)) or
+                (0 == memcmp(ORDER_QTY_CHAR, data_.data() + tag_begin, sizeof(ORDER_QTY_CHAR)-1))) {
+                auto tag = data_.substr(tag_begin, tag_end - tag_begin);
+                auto tag_as_int = stoi(tag);
                 auto field = data_.substr(value_begin, value_end - value_begin);
                 fields.emplace_back(tag_as_int, field);
             }
@@ -121,7 +128,7 @@ int main(int argc, char *argv[]) {
     cout << "duration(ns):  " << total_duration << endl;
     cout << "ns/msg:        " << double(total_duration)/times.size() << endl;
 
-    ofstream times_file("times-4.txt");
+    ofstream times_file("times-5.txt");
     for(auto i : times) {
         times_file << i.count() << endl;
     }

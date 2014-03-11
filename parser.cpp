@@ -15,8 +15,8 @@ constexpr char MSG_TYPE_EXECUTION_REPORT[] = "8";
 constexpr char MSG_END[] = "\00110=";
 constexpr int  CHECKSUM_LENGTH = 3; // number of characters in the value of a checksum
 
-constexpr char SOH[] = "\001";              // pattern that delimits tag/value pairs
-constexpr char TAG_VALUE_SEPARATOR[] = "="; // pattern that separates tag from value
+constexpr char SOH = '\001';              // pattern that delimits tag/value pairs
+constexpr char TAG_VALUE_SEPARATOR = '='; // pattern that separates tag from value
 
 
 struct MessageParser
@@ -173,7 +173,7 @@ int main(int argc, char *argv[])
     cout << "ns/msg:        " << double(total_duration)/times.size() << endl;
 
     // Write the timing data to a file
-    ofstream times_file("times-2.txt");
+    ofstream times_file("times-3.txt");
     for(auto i : times)
     {
         times_file << i.count() << endl;

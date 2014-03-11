@@ -42,8 +42,9 @@ struct MessageParser {
 private:
     void parse_fields() {
         auto tag_begin(begin_);
-        
-        while (tag_begin < end_) {
+        int found_value_count(0);
+
+        while (tag_begin < end_ && (found_value_count < 2)) {
             auto tag_end = data_.find('=', tag_begin);
             auto value_begin = tag_end + 1;
             auto value_end = data_.find(SOH, value_begin);
@@ -56,6 +57,7 @@ private:
                 auto tag_as_int = stoi(tag);
                 auto field = data_.substr(value_begin, value_end - value_begin);
                 fields.emplace_back(tag_as_int, field);
+                found_value_count++;
             }
             tag_begin = value_end + 1;
         }
@@ -128,7 +130,7 @@ int main(int argc, char *argv[]) {
     cout << "duration(ns):  " << total_duration << endl;
     cout << "ns/msg:        " << double(total_duration)/times.size() << endl;
 
-    ofstream times_file("times-5.txt");
+    ofstream times_file("times-6.txt");
     for(auto i : times) {
         times_file << i.count() << endl;
     }

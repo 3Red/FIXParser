@@ -59,7 +59,8 @@ private:
     void parse_fields()
     {
         size_t tag_begin = begin_;
-        while (tag_begin < end_)
+        int found_value_count = 0;
+        while (tag_begin < end_ && (found_value_count < 2))
         {
             // The tag is the string from the current position until the equal sign
             size_t tag_end = data_.find(TAG_VALUE_SEPARATOR, tag_begin);
@@ -77,8 +78,11 @@ private:
                 (0 == memcmp(TAG_ORDER_QTY_CHAR, data_.data() + tag_begin, sizeof(TAG_ORDER_QTY_CHAR)-1))
                )
             {
+                found_value_count++;
+
                 string tag = data_.substr(tag_begin, tag_end - tag_begin);
                 auto tag_as_int = stoi(tag);
+
                 string field = data_.substr(value_begin, value_end - value_begin);
 
                 // Store the tag and value in our container
@@ -188,7 +192,7 @@ int main(int argc, char *argv[])
     cout << "ns/msg:        " << double(total_duration)/times.size() << endl;
 
     // Write the timing data to a file
-    ofstream times_file("times-5.txt");
+    ofstream times_file("times-6.txt");
     for(auto i : times)
     {
         times_file << i.count() << endl;

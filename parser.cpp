@@ -173,7 +173,7 @@ int main(int argc, char *argv[])
     cout << "ns/msg:        " << double(total_duration)/times.size() << endl;
 
     // Write the timing data to a file
-    ofstream times_file("times-1.txt");
+    ofstream times_file("times-2.txt");
     for(auto i : times)
     {
         times_file << i.count() << endl;

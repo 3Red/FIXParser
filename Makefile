@@ -1,5 +1,5 @@
 fix-parser: parser.cpp
-	$(CXX) -std=c++11 -Wall parser.cpp -o fix-parser
+	$(CXX) -O3 -std=c++11 -Wall parser.cpp -o fix-parser
 	./fix-parser
 	@python ./normalize.py
 

@@ -118,7 +118,7 @@ int main(int argc, char *argv[]) {
     cout << "duration(ns):  " << total_duration << endl;
     cout << "ns/msg:        " << double(total_duration)/times.size() << endl;
 
-    ofstream times_file("times-1.txt");
+    ofstream times_file("times-2.txt");
     for(auto i : times) {
         times_file << i.count() << endl;
     }

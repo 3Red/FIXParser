@@ -65,10 +65,16 @@ private:
             // The value is the string from just after the equal sign to the SOH
             size_t value_begin = tag_end + 1;
             size_t value_end = data_.find(SOH, value_begin);
-            string field = data_.substr(value_begin, value_end - value_begin);
 
-            // Store the tag and value in our container
-            fields_.emplace_back(stoi(tag), field);
+            // Only convert the value if tag is one we care about
+            auto tag_as_int = stoi(tag);
+            if (tag_as_int == TAG_MSG_TYPE or tag_as_int == TAG_ORDER_QTY)
+            {
+                string field = data_.substr(value_begin, value_end - value_begin);
+
+                // Store the tag and value in our container
+                fields_.emplace_back(stoi(tag), field);
+            }
 
             // Prepare to look for the next tag
             tag_begin = value_end + 1;
@@ -173,7 +179,7 @@ int main(int argc, char *argv[])
     cout << "ns/msg:        " << double(total_duration)/times.size() << endl;
 
     // Write the timing data to a file
-    ofstream times_file("times-3.txt");
+    ofstream times_file("times-4.txt");
     for(auto i : times)
     {
         times_file << i.count() << endl;

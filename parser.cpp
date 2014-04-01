@@ -1,9 +1,11 @@
 #include <iostream>
 #include <fstream>
+#include <chrono>
 #include <vector>
 #include <tuple>
 
 using namespace std;
+using namespace chrono;
 
 constexpr int  TAG_MSG_TYPE = 35;
 constexpr int  TAG_ORDER_QTY = 38;
@@ -146,6 +148,8 @@ int main(int argc, char *argv[])
     FileParser file_parser(data);
 
     // Parse each individual message found in the file
+    auto begin = chrono::high_resolution_clock::now();
+    vector<nanoseconds> times;
     MessageParser message = file_parser.next();
     while (message.is_valid())
     {
@@ -153,11 +157,27 @@ int main(int argc, char *argv[])
         accumulator.add(message);
 
         // Get and parse the next message
+        auto message_begin(high_resolution_clock::now());
         message = file_parser.next();
+        auto message_end = high_resolution_clock::now();
+
+        auto duration = duration_cast<nanoseconds>(message_end - message_begin).count();
+        times.emplace_back(duration);
     }
 
     // Write summary statistics
-    cout << "total qty: " << accumulator.get() << endl;
+    auto end = high_resolution_clock::now();
+    auto total_duration = duration_cast<nanoseconds>(end - begin).count();
+    cout << "total qty:     " << accumulator.get() << endl;
+    cout << "duration(ns):  " << total_duration << endl;
+    cout << "ns/msg:        " << double(total_duration)/times.size() << endl;
+
+    // Write the timing data to a file
+    ofstream times_file("times-1.txt");
+    for(auto i : times)
+    {
+        times_file << i.count() << endl;
+    }
 
     return 0;
 }

@@ -1,9 +1,11 @@
 #include <iostream>
 #include <fstream>
+#include <chrono>
 #include <vector>
 #include <tuple>
 
 using namespace std;
+using namespace chrono;
 
 constexpr char EXECUTION_REPORT[] = "8";
 constexpr int CHECKSUM_LENGTH = 3;
@@ -94,16 +96,32 @@ int main(int argc, char *argv[]) {
     string data((istreambuf_iterator<char>(t)), istreambuf_iterator<char>());
     FileParser parser(data);
     MessageParser message(parser.next());
+    auto begin(chrono::high_resolution_clock::now());
     
     // Parse individual messages.
+    vector<nanoseconds> times;
     Accumulator accumulator;
     for (;message.is_valid(); ) {
+        auto message_begin(high_resolution_clock::now());
         accumulator.add(message);
         message = parser.next();
+        auto message_end(high_resolution_clock::now());
+        auto duration = duration_cast<nanoseconds>(message_end - 
+                                                   message_begin).count();
+        times.emplace_back(duration);
     }
 
     // Write summary statistics.
+    auto end(high_resolution_clock::now());
+    auto total_duration = duration_cast<nanoseconds>(end - begin).count();
     cout << "total qty:     " << accumulator.get() << endl;
+    cout << "duration(ns):  " << total_duration << endl;
+    cout << "ns/msg:        " << double(total_duration)/times.size() << endl;
+
+    ofstream times_file("times-1.txt");
+    for(auto i : times) {
+        times_file << i.count() << endl;
+    }
 
     return 0;
 }

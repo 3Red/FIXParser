@@ -34,7 +34,8 @@ struct MessageParser
 
     MessageParser& operator=(const MessageParser& rhs)
     {
-        fields_ = rhs.fields_;
+        message_type_ = rhs.message_type_;
+        order_qty_ = rhs.order_qty_;
         data_  = rhs.data_;
         begin_ = rhs.begin_;
         end_   = rhs.end_;
@@ -46,10 +47,8 @@ struct MessageParser
 
     const string& find(int tag)
     {
-        for(auto &i : fields_)
-        {
-            if (get<0>(i) == tag) { return get<1>(i); }
-        }
+        if (tag == TAG_MSG_TYPE)       { return message_type_; }
+        else if (tag == TAG_ORDER_QTY) { return order_qty_; }
 
         static string empty;
         return empty;
@@ -74,19 +73,15 @@ private:
             static_assert(sizeof(TAG_ORDER_QTY_CHAR) <= CHECKSUM_LENGTH, "invalid size");
 
             // Only convert the value if tag is one we care about
-            if ((0 == memcmp(TAG_MSG_TYPE_CHAR, data_.data() + tag_begin, sizeof(TAG_MSG_TYPE_CHAR)-1))  ||
-                (0 == memcmp(TAG_ORDER_QTY_CHAR, data_.data() + tag_begin, sizeof(TAG_ORDER_QTY_CHAR)-1))
-               )
+            if ((0 == memcmp(TAG_MSG_TYPE_CHAR, data_.data() + tag_begin, sizeof(TAG_MSG_TYPE_CHAR)-1)))
             {
+                message_type_ = data_.substr(value_begin, value_end - value_begin);
                 found_value_count++;
-
-                string tag = data_.substr(tag_begin, tag_end - tag_begin);
-                auto tag_as_int = stoi(tag);
-
-                string field = data_.substr(value_begin, value_end - value_begin);
-
-                // Store the tag and value in our container
-                fields_.emplace_back(tag_as_int, field);
+            }
+            else if (0 == memcmp(TAG_ORDER_QTY_CHAR, data_.data() + tag_begin, sizeof(TAG_ORDER_QTY_CHAR)-1))
+            {
+                order_qty_ = data_.substr(value_begin, value_end - value_begin);
+                found_value_count++;
             }
 
             // Prepare to look for the next tag
@@ -94,7 +89,8 @@ private:
         }
     }
 
-    vector<tuple<int, string>> fields_;
+    string  message_type_;
+    string  order_qty_;
     string& data_;
     size_t  begin_;
     size_t  end_;
@@ -192,7 +188,7 @@ int main(int argc, char *argv[])
     cout << "ns/msg:        " << double(total_duration)/times.size() << endl;
 
     // Write the timing data to a file
-    ofstream times_file("times-6.txt");
+    ofstream times_file("times-7.txt");
     for(auto i : times)
     {
         times_file << i.count() << endl;

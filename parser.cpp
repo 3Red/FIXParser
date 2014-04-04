@@ -32,9 +32,8 @@ struct MessageParser {
     bool is_valid() { return begin_ != end_; }
 
     const string& find(int tag) {
-        for(auto &i : fields) {
-            if (get<0>(i) == tag) { return get<1>(i); }
-        }
+        if (tag == MSG_TYPE) { return message_type_; }
+        else if (tag == ORDER_QTY) { return order_qty_; }
         static string empty;
         return empty;
     }
@@ -48,21 +47,19 @@ private:
             auto tag_end = data_.find('=', tag_begin);
             auto value_begin = tag_end + 1;
             auto value_end = data_.find(SOH, value_begin);
-            // make sure we don't overflow data, assuming it is valid fix.
-            static_assert(sizeof(MSG_TYPE_CHAR) <= CHECKSUM_LENGTH, "invalid size"); 
-            static_assert(sizeof(ORDER_QTY_CHAR) <= CHECKSUM_LENGTH, "invalid size");
-            if ((0 == memcmp(MSG_TYPE_CHAR, data_.data() + tag_begin, sizeof(MSG_TYPE_CHAR)-1)) or
-                (0 == memcmp(ORDER_QTY_CHAR, data_.data() + tag_begin, sizeof(ORDER_QTY_CHAR)-1))) {
-                auto tag = data_.substr(tag_begin, tag_end - tag_begin);
-                auto tag_as_int = stoi(tag);
-                auto field = data_.substr(value_begin, value_end - value_begin);
-                fields.emplace_back(tag_as_int, field);
+
+            if (0 == memcmp(MSG_TYPE_CHAR, data_.data() + tag_begin, sizeof(MSG_TYPE_CHAR)-1)) {
+                message_type_ = data_.substr(value_begin, value_end - value_begin);
+                found_value_count++;
+            } else if (0 == memcmp(ORDER_QTY_CHAR, data_.data() + tag_begin, sizeof(ORDER_QTY_CHAR)-1)) {
+                order_qty_ = data_.substr(value_begin, value_end - value_begin);
                 found_value_count++;
             }
             tag_begin = value_end + 1;
         }
     }
-    vector<tuple<int, string>> fields;
+    string  message_type_;
+    string  order_qty_;
     string& data_;
     size_t  begin_;
     size_t  end_;
@@ -130,7 +127,7 @@ int main(int argc, char *argv[]) {
     cout << "duration(ns):  " << total_duration << endl;
     cout << "ns/msg:        " << double(total_duration)/times.size() << endl;
 
-    ofstream times_file("times-6.txt");
+    ofstream times_file("times-7.txt");
     for(auto i : times) {
         times_file << i.count() << endl;
     }
